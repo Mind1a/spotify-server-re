@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
 
 const userSchema = new mongoose.Schema(
   {
@@ -63,6 +64,30 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
+
+// compear passwords
+//                   custom var                     mindia123
+userSchema.methods.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+
+// mindia@gmail.com
+// test123  ---  adjwkajdlksjdlawkdjalksjdalwd
+// adjwkajdlksjdlawkdjalksjdalwd - wadkjdwkajdkawjdkawjdkawjdawkjdwa
+// Hash password before saving user
+
+userSchema.pre("save", async function () {
+  // ეს ფუნქცია გაეშვება როდესაც User ან შეიქმნა ან განიცდის მოდიფიკაციას
+
+  if (!this.isModified("password")) {
+    return;
+  }
+
+  // დავჰეშოთ პაროლი
+
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+});
 
 const User = mongoose.model("User", userSchema);
 module.exports = User;
